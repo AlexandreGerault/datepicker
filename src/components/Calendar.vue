@@ -82,18 +82,12 @@ export default {
         /* A calendar line from Monday to Sunday */
         for (let i = 0; i < 7; i++) {
           if (moment(currentDay).isSameOrBefore(lastMonthDay)) {
-            if (isFirstWeek && i >= firstMonthDay.weekday()) {
+            if ((isFirstWeek && i >= firstMonthDay.weekday()) || (!isFirstWeek)) {
               line.push(currentDay.clone())
               currentDay.add(1, 'day')
               daysInWeek++
             } else if (isFirstWeek && i < firstMonthDay.weekday()) {
               line.push('')
-            }
-
-            if (!isFirstWeek) {
-              line.push(currentDay.clone())
-              currentDay.add(1, 'day')
-              daysInWeek++
             }
           } else {
             line.push('')
