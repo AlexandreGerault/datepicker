@@ -1,29 +1,23 @@
 <template>
   <div class="ui-datepicker">
-    <table class="table">
-      <thead class="datepicker-header">
-        <th>
+    <div class="datepicker-header">
+        <p class="has-text-centered">
           <span class="button previous" @click="previousMonth">
             <i class="fas fa-angle-left"></i>
           </span>
-        </th>
-        <th colspan="5">
-          <p class="has-text-centered">
-            <span id="month">
-              {{ month() }}
-            </span>
-            <span id="year">
-              {{ year() }}
-            </span>
-          </p>
-        </th>
-        <th>
+          <span id="month">
+            {{ month }}
+          </span>
+          <span id="year">
+            {{ year }}
+          </span>
           <span class="button next" @click="nextMonth">
             <i class="fas fa-angle-right"></i>
           </span>
-        </th>
-      </thead>
-      <tbody id='updateCalendarForm'>
+        </p>
+    </div>
+    <table class="table">
+      <thead class="datepicker-header">
         <tr class="tr">
           <th>Lun</th>
           <th>Mar</th>
@@ -33,8 +27,10 @@
           <th>Sam</th>
           <th>Dim</th>
         </tr>
-        <tr v-for="week in weeks">
-          <td v-for="day in week" @click="select"><span v-if="typeof(day) === 'object'" >{{ day.date() }} </span></td>
+      </thead>
+      <tbody>
+        <tr v-for="(week, index) in weeks" :key="index">
+          <td v-for="(day, index) in week" :key="index" @click="select" :class="{ active: isSelected(day) }"><span v-if="typeof(day) === 'object'" >{{ day.date() }} </span></td>
         </tr>
       </tbody>
     </table>
@@ -50,17 +46,19 @@ export default {
   data () {
     return {
       date: moment(),
-      selected: moment(),
+      selectedDay: moment(),
       weeks: []
     }
   },
-  methods: {
+  computed: {
     month () {
       return this.date.format('MMMM')
     },
     year () {
       return this.date.year()
-    },
+    }
+  },
+  methods: {
     nextMonth () {
       this.date = moment(this.date.add(1, 'month'))
       this.weeks = this.getWeeks()
@@ -89,7 +87,6 @@ export default {
               currentDay.add(1, 'day')
               daysInWeek++
             } else if (isFirstWeek && i < firstMonthDay.weekday()) {
-              console.log('Push empty cell')
               line.push('')
             }
 
@@ -99,32 +96,34 @@ export default {
               daysInWeek++
             }
           } else {
-            console.log('Push empty cell')
             line.push('')
           }
         }
 
         day.add(daysInWeek, 'day')
-        console.log(line)
         weeks.push(line)
         isFirstWeek = false
       }
       return weeks
     },
     select (event) {
-      let year = this.date.year()
-      let month = this.date.month()
-      let day = event.target.innerText
-      this.selected = moment({ y: year, m: month, d: day })
+      this.selectedDay = moment({
+        y: this.date.year(),
+        m: this.date.month(),
+        d: event.target.innerText
+      })
     },
-    isSelected (element) {
-      console.log(element)
-      return this.date.date() === element.innerHTML
+    isSelected (day) {
+      if (typeof (day) === 'object') {
+        return this.selectedDay.date() === day.date()
+      }
+      return false
     }
   },
   created: function () {
     this.weeks = this.getWeeks()
     this.date = moment()
+    this.selectedDay = this.date.clone()
   }
 }
 </script>
@@ -140,13 +139,13 @@ td {
   width: 58px;
   height: 58px;
   padding: 5px !important;
+  border-radius: 50%;
 }
 td:not(:empty):hover {
   background: rgba(0,0,0,0.5);
-  border-radius: 50%;
   transition: background 0.2s;
 }
-.selected {
+.active {
   background: rgba(0,0,0,0.5);
 }
 </style>
