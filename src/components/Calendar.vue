@@ -1,36 +1,37 @@
 <template>
-  <div class="ui-datepicker">
-    <div class="datepicker-header">
-        <p class="has-text-centered">
-          <span class="button previous" @click="previousMonth">
-            <i class="fas fa-angle-left"></i>
-          </span>
-          <span id="month">
-            {{ month }}
-          </span>
-          <span id="year">
-            {{ year }}
-          </span>
-          <span class="button next" @click="nextMonth">
-            <i class="fas fa-angle-right"></i>
-          </span>
-        </p>
+  <div class="datepicker__container">
+    <div class="datepicker__header">
+      <div class="datepicker__header__day">
+        {{ locale_day }}
+      </div>
+      <div class="datepicker__header__formated_date">
+        <div class="datepicker__header__formated_month">{{ formated_selected_month }}</div>
+        <div class="datepicker__header__formated_month_day">{{ formated_date }}</div>
+        <div class="datepicker__header__formated_year">{{ formated_selected_year }}</div>
+      </div>
+      <div class="datepicker__header__navigation">
+        <span class="datepicker__header__navigation__previous datepicker__control" @click="previousMonth()"><i class="fas fa-angle-left"></i></span>
+        <span class="datepicker__header__navigation__label">{{ formated_month }} {{formated_year }}</span>
+        <span class="datepicker__header__navigation__next datepicker__control" @click="nextMonth()"><i class="fas fa-angle-right"></i></span>
+      </div>
     </div>
-    <table class="table">
-      <thead class="datepicker-header">
+    <table class="datepicker__table">
+      <thead class="datepicker__days__label">
         <tr class="tr">
-          <th>Lun</th>
-          <th>Mar</th>
-          <th>Mer</th>
-          <th>Jeu</th>
-          <th>Ven</th>
-          <th>Sam</th>
-          <th>Dim</th>
+          <th class="datepicker__day__label">Lun</th>
+          <th class="datepicker__day__label">Mar</th>
+          <th class="datepicker__day__label">Mer</th>
+          <th class="datepicker__day__label">Jeu</th>
+          <th class="datepicker__day__label">Ven</th>
+          <th class="datepicker__day__label">Sam</th>
+          <th class="datepicker__day__label">Dim</th>
         </tr>
       </thead>
-      <tbody>
-        <tr v-for="(week, index) in weeks" :key="index">
-          <td v-for="(day, index) in week" :key="index" @click="select" :class="{ active: isSelected(day) }"><span v-if="typeof(day) === 'object'" >{{ day.date() }} </span></td>
+      <tbody class="datepicker__table__content">
+        <tr v-for="(week, index) in weeks" :key="index" class="datepicker__table__line">
+          <td v-for="(day, index) in week" :key="index" @click="select" :class="{
+            datepicker__table__cell__selected: isSelected(day),
+            datepicker__table__day: isNotEmpty(day) }"><span v-if="typeof(day) === 'object'">{{ day.date() }} </span></td>
         </tr>
       </tbody>
     </table>
@@ -56,6 +57,24 @@ export default {
     },
     year () {
       return this.date.year()
+    },
+    locale_day () {
+      return this.selectedDay.format('dddd')
+    },
+    formated_month () {
+      return this.date.format('MMM')
+    },
+    formated_year () {
+      return this.date.format('YYYY')
+    },
+    formated_date () {
+      return this.selectedDay.format('D')
+    },
+    formated_selected_month () {
+      return this.selectedDay.format('MMM')
+    },
+    formated_selected_year () {
+      return this.selectedDay.format('YYYY')
     }
   },
   methods: {
@@ -69,8 +88,8 @@ export default {
     },
     getWeeks () {
       let weeks = []
-      let firstMonthDay = moment(this.date.date(1))
-      let lastMonthDay = moment(this.date.endOf('month'))
+      let firstMonthDay = this.date.startOf('month').clone()
+      let lastMonthDay = this.date.endOf('month').clone()
       let day = firstMonthDay.clone()
       let isFirstWeek = true
 
@@ -82,11 +101,13 @@ export default {
         /* A calendar line from Monday to Sunday */
         for (let i = 0; i < 7; i++) {
           if (moment(currentDay).isSameOrBefore(lastMonthDay)) {
+            /* Adding new days
+               But add a blank cell if we're before the first day */
             if ((isFirstWeek && i >= firstMonthDay.weekday()) || (!isFirstWeek)) {
               line.push(currentDay.clone())
               currentDay.add(1, 'day')
               daysInWeek++
-            } else if (isFirstWeek && i < firstMonthDay.weekday()) {
+            } else {
               line.push('')
             }
           } else {
@@ -101,17 +122,16 @@ export default {
       return weeks
     },
     select (event) {
-      this.selectedDay = moment({
-        y: this.date.year(),
-        m: this.date.month(),
-        d: event.target.innerText
-      })
+      this.selectedDay = moment().set('year', this.date.year()).set('month', this.date.month()).set('date', event.target.innerText)
     },
     isSelected (day) {
-      if (typeof (day) === 'object') {
-        return this.selectedDay.date() === day.date()
+      if (day instanceof moment) {
+        return this.selectedDay.date() === day.date() && this.selectedDay.month() === day.month() && this.selectedDay.year() === day.year()
       }
       return false
+    },
+    isNotEmpty (day) {
+      return day instanceof moment
     }
   },
   created: function () {
@@ -122,24 +142,100 @@ export default {
 }
 </script>
 
-<style>
-td:empty {
-  cursor: default;
+<style lang="scss">
+$dark-color: #c66900;
+$main-color: #ff9800;
+$width: 280px;
+
+.datepicker__container * {
+  box-sizing: border-box;
 }
-td {
+
+.datepicker__container {
+  width: $width;
+  margin: auto;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+}
+
+.datepicker__header__day {
+  height: 32px;
+  line-height: 32px;
+  background: $dark-color;
+  text-transform: capitalize;
+  font-size: 14px;
+  font-weight: 300;
+  color: white;
+}
+.datepicker__header__formated_date {
+  height: 135px;
+  background: $main-color;
+}
+.datepicker__header__formated_date div {
+  display: block;
+  color: white;
+  text-align: center;
+}
+.datepicker__header__formated_month {
+  padding: 8px 0px;
+  font-size: 22px;
+  text-transform: uppercase;
+}
+.datepicker__header__formated_month_day {
+  font-size: 55px;
+  height: 39px;
+  margin-top: -10px;
+  margin-bottom: 24px;
+}
+.datepicker__header__formated_year {
+  font-size: 26px;
+  color: rgba(255, 255, 255, 0.75) !important;
+  margin-bottom: 12px 0px;
+}
+.datepicker__header__navigation {
+  position: relative;
+  margin-top: 8px;
+  padding: 7px;
+  text-align: center;
+  font-size: 14px;
+}
+.datepicker__control {
+  position: absolute;
   cursor: pointer;
-  text-align: center !important;
-  vertical-align: middle !important;
-  width: 58px;
-  height: 58px;
-  padding: 5px !important;
+  font-size: 15px;
+  color: $main-color;
+  font-weight: 300;
+  top: 7px;
+}
+.datepicker__header__navigation__previous {
+  left: 62px;
+}
+.datepicker__header__navigation__next {
+  right: 62px;
+}
+.datepicker__day__label {
+  color: grey;
+  font-weight: 400;
+}
+.datepicker__table tr {
+  height: $width / 7;
+}
+.datepicker__table td, .datepicker__table th {
+  width: $width / 7;
+  text-align: center;
+}
+.datepicker__table__day {
+  font-size: 12px;
+  text-align: center;
+  font-weight: 300;
+  cursor: pointer;
+  transition: all .5s;
+  transition-timing-function: ease;
   border-radius: 50%;
 }
-td:not(:empty):hover {
-  background: rgba(0,0,0,0.5);
-  transition: background 0.2s;
+.datepicker__table__day:hover {
+  background: $main-color;
 }
-.active {
-  background: rgba(0,0,0,0.5);
+.datepicker__table__cell__selected {
+  background: $main-color;
 }
 </style>
