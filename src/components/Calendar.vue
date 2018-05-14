@@ -31,7 +31,7 @@
         <tr v-for="(week, index) in weeks" :key="index" class="datepicker__table__line">
           <td v-for="(day, index) in week" :key="index" @click="select" :class="{
             datepicker__table__cell__selected: isSelected(day),
-            datepicker__table__day: isNotEmpty(day) }"><span v-if="typeof(day) === 'object'">{{ day.date() }} </span></td>
+            datepicker__table__day: isMomentInstance(day) }"><span v-if="isMomentInstance(day)">{{ day.date() }} </span></td>
         </tr>
       </tbody>
     </table>
@@ -44,6 +44,7 @@ import moment from 'moment'
 
 export default {
   name: 'Calendar',
+  props: [],
   data () {
     return {
       date: moment(),
@@ -122,7 +123,11 @@ export default {
       return weeks
     },
     select (event) {
-      this.selectedDay = moment().set('year', this.date.year()).set('month', this.date.month()).set('date', event.target.innerText)
+      if (event.target.innerText !== '') {
+        this.selectedDay = moment().set('year', this.date.year()).set('month', this.date.month()).set('date', event.target.innerText)
+      } else {
+        event.preventDefault()
+      }
     },
     isSelected (day) {
       if (day instanceof moment) {
@@ -130,7 +135,7 @@ export default {
       }
       return false
     },
-    isNotEmpty (day) {
+    isMomentInstance (day) {
       return day instanceof moment
     }
   },
@@ -198,6 +203,9 @@ $width: 280px;
   text-align: center;
   font-size: 14px;
 }
+.datepicker__header__navigation__label {
+  text-transform: capitalize;
+}
 .datepicker__control {
   position: absolute;
   cursor: pointer;
@@ -216,6 +224,9 @@ $width: 280px;
   color: grey;
   font-weight: 400;
 }
+.datepicker__day__disabled {
+  color: lightgrey;
+}
 .datepicker__table tr {
   height: $width / 7;
 }
@@ -228,7 +239,7 @@ $width: 280px;
   text-align: center;
   font-weight: 300;
   cursor: pointer;
-  transition: all .5s;
+  transition: background .5s;
   transition-timing-function: ease;
   border-radius: 50%;
 }
