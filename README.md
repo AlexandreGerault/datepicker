@@ -1,8 +1,8 @@
-# calendar
+# Simple VueJS datepicker
 
-> A Vue.js project
+> A Vue.js datepicker configurable with props (options will be added to this README in a close future) so that would be easily reusable with my laravels apps.
 
-## Build Setup
+## How to use test it?
 
 ``` bash
 # install dependencies
@@ -18,4 +18,8 @@ npm run build
 npm run build --report
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader). These links are provided by the `vue-cli` package.
+
+## Licence
+
+My datepicker is totally open source. I'm still looking for the most permissive licence (this is an annoying part) because it uses VueJS and some others libraries.
