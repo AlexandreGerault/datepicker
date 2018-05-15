@@ -2,7 +2,7 @@
 
 > A Vue.js datepicker configurable with props (options will be added to this README in a close future) so that would be easily reusable with my laravels apps.
 
-## How to use test it?
+## How to use it?
 
 ``` bash
 # install dependencies
