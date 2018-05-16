@@ -29,9 +29,10 @@
       </thead>
       <tbody class="datepicker__table__content">
         <tr v-for="(week, index) in weeks" :key="index" class="datepicker__table__line">
-          <td v-for="(day, index) in week" :key="index" @click="select" :class="{
+          <td v-for="(day, index) in week" :key="index" @click.stop="select($event,day)" :class="{
             datepicker__table__cell__selected: isSelected(day),
-            datepicker__table__day: isMomentInstance(day) }"><span v-if="isMomentInstance(day)">{{ day.date() }} </span></td>
+            datepicker__table__day: isMomentInstance(day),
+            datepicker__table__disabled__day: isDisabledDay(day) }"><span v-if="isMomentInstance(day)">{{ day.date() }} </span></td>
         </tr>
       </tbody>
     </table>
@@ -44,7 +45,7 @@ import moment from 'moment'
 
 export default {
   name: 'Calendar',
-  props: [],
+  props: ['disabledWeekdays', 'disabledDays'],
   data () {
     return {
       date: moment(),
@@ -122,11 +123,10 @@ export default {
       }
       return weeks
     },
-    select (event) {
-      if (event.target.innerText !== '') {
+    select (event, day) {
+      if (day instanceof moment && !this.isDisabledDay(day)) {
         this.selectedDay = moment().set('year', this.date.year()).set('month', this.date.month()).set('date', event.target.innerText)
-      } else {
-        event.preventDefault()
+        this.$emit('select', day)
       }
     },
     isSelected (day) {
@@ -135,8 +135,29 @@ export default {
       }
       return false
     },
+    /* Trick to bypass the impossibility of using the instanceof keyword with vuejs */
     isMomentInstance (day) {
       return day instanceof moment
+    },
+    isDisabledWeekday (weekday) {
+      if (weekday instanceof moment) {
+        let disabledWeekday = false
+        this.disabledWeekdays.forEach(function (day) {
+          if (day.index === weekday.weekday() && day.checked === true) {
+            disabledWeekday = true
+          }
+        })
+        return disabledWeekday
+      }
+      return false
+    },
+    isDisabledDay (day) {
+      if (day instanceof moment) {
+        if (this.isDisabledWeekday(day) || this.disabledDays.includes(day.format('YYYY MM DD'))) {
+          return true
+        }
+      }
+      return false
     }
   },
   created: function () {
@@ -248,5 +269,13 @@ $width: 280px;
 }
 .datepicker__table__cell__selected {
   background: $main-color;
+}
+.datepicker__table__disabled__day {
+  color: lightgray;
+  cursor: default;
+
+  &:hover {
+    background: inherit;
+  }
 }
 </style>
