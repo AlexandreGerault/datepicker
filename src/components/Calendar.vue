@@ -130,7 +130,7 @@ export default {
       }
     },
     isSelected (day) {
-      if (day instanceof moment) {
+      if (day instanceof moment && !this.isDisabledDay(day)) {
         return this.selectedDay.date() === day.date() && this.selectedDay.month() === day.month() && this.selectedDay.year() === day.year()
       }
       return false
@@ -153,7 +153,9 @@ export default {
     },
     isDisabledDay (day) {
       if (day instanceof moment) {
-        if (this.isDisabledWeekday(day) || this.disabledDays.includes(day.format('YYYY MM DD'))) {
+        if (this.isDisabledWeekday(day)) {
+          return true
+        } else if (Array.isArray(this.disabledDays) && this.disabledDays.includes(day.format('dddd D MMMM YYYY'))) {
           return true
         }
       }
@@ -191,6 +193,7 @@ $width: 280px;
   font-size: 14px;
   font-weight: 300;
   color: white;
+  text-align: center;
 }
 .datepicker__header__formated_date {
   height: 135px;
@@ -247,6 +250,9 @@ $width: 280px;
 }
 .datepicker__day__disabled {
   color: lightgrey;
+}
+.datepicker__table, .datepicker__header {
+  background: white;
 }
 .datepicker__table tr {
   height: $width / 7;
