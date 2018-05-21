@@ -45,7 +45,7 @@ import moment from 'moment'
 
 export default {
   name: 'Calendar',
-  props: ['disabledWeekdays', 'disabledDays'],
+  props: ['disabledWeekdays', 'disabledDays', 'disableBeforeToday'],
   data () {
     return {
       date: moment(),
@@ -153,11 +153,7 @@ export default {
     },
     isDisabledDay (day) {
       if (day instanceof moment) {
-        if (this.isDisabledWeekday(day)) {
-          return true
-        } else if (Array.isArray(this.disabledDays) && this.disabledDays.includes(day.format('dddd D MMMM YYYY'))) {
-          return true
-        }
+        return this.isDisabledWeekday(day) || (Array.isArray(this.disabledDays) && this.disabledDays.includes(day.format('dddd D MMMM YYYY'))) || (this.disableBeforeToday && day.isBefore(moment()))
       }
       return false
     }

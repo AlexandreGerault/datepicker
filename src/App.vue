@@ -21,18 +21,18 @@
             {{ day }}
           </li>
         </ul>
-        <Calendar :disabled-weekdays="disabledWeekDays" :disabled-days="disabledDays" v-on:select="selectDayToDisable($event, day)"/>
+        <Calendar :disabled-weekdays="disabledWeekDays" :disabled-days="disabledDays" disable-before-today="true" v-on:select="selectDayToDisable($event, day)"/>
         <button class="button alert" @click="addDayToDisable()">Désactiver ce jour</button>
       </div>
       <div class="control-group">
         <h4 class="centered-text">Réactiver un jour</h4>
-        <Calendar :disabled-weekdays="disabledWeekDays" :disabled-days="reverseDisabledDays" v-on:select="selectDayToEnable($event, day)"/>
+        <Calendar :disabled-weekdays="disabledWeekDays" disable-before-today="true" :disabled-days="reverseDisabledDays" v-on:select="selectDayToEnable($event, day)"/>
         <button class="button success" @click="removeDayToDisable()">Réactiver ce jour</button>
       </div>
     </div>
     <div class="result">
       <h3 class="centered-text">Résultat final</h3>
-      <Calendar :disabled-weekdays="disabledWeekDays" :disabled-days="disabledDays" v-on:select="updateDay($event, day)"/>
+      <Calendar :disabled-weekdays="disabledWeekDays" disable-before-today="true" :disabled-days="disabledDays" v-on:select="updateDay($event, day)"/>
     </div>
   </div>
 </template>
