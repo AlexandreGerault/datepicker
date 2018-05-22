@@ -43,9 +43,11 @@
 
 import moment from 'moment'
 
+const dateFormat = 'dddd D MMMM YYYY'
+
 export default {
   name: 'Calendar',
-  props: ['disabledWeekdays', 'disabledDays', 'disableBeforeToday'],
+  props: ['disabledWeekdays', 'disabledDays', 'disableBeforeToday', 'disabledPeriods'],
   data () {
     return {
       date: moment(),
@@ -142,18 +144,30 @@ export default {
     isDisabledWeekday (weekday) {
       if (weekday instanceof moment) {
         let disabledWeekday = false
-        this.disabledWeekdays.forEach(function (day) {
-          if (day.index === weekday.weekday() && day.checked === true) {
-            disabledWeekday = true
-          }
-        })
+        if (Array.isArray(this.disabledWeekdays)) {
+          this.disabledWeekdays.forEach(function (day) {
+            if (day.index === weekday.weekday() && day.checked === true) {
+              disabledWeekday = true
+            }
+          })
+        }
         return disabledWeekday
       }
       return false
     },
+    isInPeriod (day) {
+      // let isBetween = false
+      if (Array.isArray(this.disabledPeriods)) {
+        this.disabledPeriods.forEach(function (e) {
+          if (day.isBetween(e.start, e.end)) {
+            console.log(e.start.format(dateFormat), e.end.format(dateFormat), day.format(dateFormat))
+          }
+        })
+      }
+    },
     isDisabledDay (day) {
       if (day instanceof moment) {
-        return this.isDisabledWeekday(day) || (Array.isArray(this.disabledDays) && this.disabledDays.includes(day.format('dddd D MMMM YYYY'))) || (this.disableBeforeToday && day.isBefore(moment()))
+        return this.isDisabledWeekday(day) || (Array.isArray(this.disabledDays) && this.disabledDays.includes(day.format(dateFormat))) || (this.disableBeforeToday && day.isBefore(moment())) || this.isInPeriod(day)
       }
       return false
     }

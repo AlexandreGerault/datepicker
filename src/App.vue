@@ -30,9 +30,21 @@
         <button class="button success" @click="removeDayToDisable()">Réactiver ce jour</button>
       </div>
     </div>
+    <div class="control">
+      <h3>Périodes</h3>
+      <div class="control-group">
+        <h4>Premier jour</h4>
+        <Calendar disabled-weekdays="" disable-before-today="true" disabled-days="" v-on:select="selectFirstPeriodDay($event, day)"/>
+      </div>
+      <div class="control-group">
+        <h4>Dernier jour</h4>
+        <Calendar disabled-weekdays="" disable-before-today="true" disabled-days="" v-on:select="selectLastPeriodDay($event, day)"/>
+      </div>
+      <button class="button success" @click="addPeriod()">Désactiver cette période</button>
+    </div>
     <div class="result">
       <h3 class="centered-text">Résultat final</h3>
-      <Calendar :disabled-weekdays="disabledWeekDays" disable-before-today="true" :disabled-days="disabledDays" v-on:select="updateDay($event, day)"/>
+      <Calendar :disabled-weekdays="disabledWeekDays" disable-before-today="true" :disabled-days="disabledDays" :disabled-periods="periods" v-on:select="updateDay($event, day)"/>
     </div>
   </div>
 </template>
@@ -61,7 +73,10 @@ export default {
       ],
       day: moment(),
       dayToDisable: moment(),
-      dayToEnable: moment()
+      dayToEnable: moment(),
+      periods: [],
+      firstPeriodDay: '',
+      lastPeriodDay: ''
     }
   },
   components: {
@@ -97,6 +112,12 @@ export default {
     selectDayToEnable (day) {
       this.dayToEnable = day
     },
+    selectFirstPeriodDay (day) {
+      this.firstPeriodDay = day
+    },
+    selectLastPeriodDay (day) {
+      this.lastPeriodDay = day
+    },
     addDayToDisable () {
       if (!this.disabledDays.includes(this.dayToDisable.format(dateFormat))) {
         this.disabledDays.push(this.dayToDisable.format(dateFormat))
@@ -105,6 +126,16 @@ export default {
     removeDayToDisable () {
       if (this.disabledDays.includes(this.dayToEnable.format(dateFormat))) {
         this.disabledDays.splice(this.disabledDays.indexOf(this.dayToEnable.format(dateFormat)), 1)
+      }
+    },
+    addPeriod () {
+      if (this.lastPeriodDay instanceof moment && this.firstPeriodDay instanceof moment) {
+        if (this.lastPeriodDay.isAfter(this.firstPeriodDay)) {
+          this.periods.push({
+            start: this.firstPeriodDay.clone(),
+            end: this.lastPeriodDay.clone()
+          })
+        }
       }
     }
   }
