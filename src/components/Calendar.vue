@@ -156,18 +156,20 @@ export default {
       return false
     },
     isInPeriod (day) {
-      // let isBetween = false
       if (Array.isArray(this.disabledPeriods)) {
-        this.disabledPeriods.forEach(function (e) {
-          if (day.isBetween(e.start, e.end)) {
-            console.log(e.start.format(dateFormat), e.end.format(dateFormat), day.format(dateFormat))
+        let result = false
+        this.disabledPeriods.forEach(function (period) {
+          if (day.isBetween(period.start, period.end, 'day', '[]')) {
+            result = true
           }
+          console.log(period.start.format(dateFormat), period.end.format(dateFormat), day.format(dateFormat), (day.isBetween(period.start, period.end, 'day', '[]')))
         })
+        return result
       }
     },
     isDisabledDay (day) {
       if (day instanceof moment) {
-        return this.isDisabledWeekday(day) || (Array.isArray(this.disabledDays) && this.disabledDays.includes(day.format(dateFormat))) || (this.disableBeforeToday && day.isBefore(moment())) || this.isInPeriod(day)
+        return this.isInPeriod(day) || this.isDisabledWeekday(day) || (Array.isArray(this.disabledDays) && this.disabledDays.includes(day.format(dateFormat))) || (this.disableBeforeToday && day.isBefore(moment()))
       }
       return false
     }
