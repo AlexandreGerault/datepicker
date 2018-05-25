@@ -42,6 +42,7 @@
 <script>
 
 import moment from 'moment'
+import MonthGenerator from '../modules/MonthGenerator'
 
 const dateFormat = 'dddd D MMMM YYYY'
 
@@ -51,8 +52,7 @@ export default {
   data () {
     return {
       date: moment(),
-      selectedDay: moment(),
-      weeks: []
+      selectedDay: moment()
     }
   },
   computed: {
@@ -79,51 +79,19 @@ export default {
     },
     formated_selected_year () {
       return this.selectedDay.format('YYYY')
+    },
+    weeks () {
+      return MonthGenerator.weeks(this.date)
     }
   },
   methods: {
     nextMonth () {
       this.date = moment(this.date.add(1, 'month'))
-      this.weeks = this.getWeeks()
+      this.weeks = MonthGenerator.weeks(this.date)
     },
     previousMonth () {
       this.date = moment(this.date.subtract(1, 'month'))
-      this.weeks = this.getWeeks()
-    },
-    getWeeks () {
-      let weeks = []
-      let firstMonthDay = this.date.startOf('month').clone()
-      let lastMonthDay = this.date.endOf('month').clone()
-      let day = firstMonthDay.clone()
-      let isFirstWeek = true
-
-      while (moment(day).isSameOrBefore(lastMonthDay)) {
-        let currentDay = day.clone()
-        let line = []
-        let daysInWeek = 0
-
-        /* A calendar line from Monday to Sunday */
-        for (let i = 0; i < 7; i++) {
-          if (moment(currentDay).isSameOrBefore(lastMonthDay)) {
-            /* Adding new days
-               But add a blank cell if we're before the first day */
-            if ((isFirstWeek && i >= firstMonthDay.weekday()) || (!isFirstWeek)) {
-              line.push(currentDay.clone())
-              currentDay.add(1, 'day')
-              daysInWeek++
-            } else {
-              line.push('')
-            }
-          } else {
-            line.push('')
-          }
-        }
-
-        day.add(daysInWeek, 'day')
-        weeks.push(line)
-        isFirstWeek = false
-      }
-      return weeks
+      this.weeks = MonthGenerator.weeks(this.date)
     },
     select (event, day) {
       if (day instanceof moment && !this.isDisabledDay(day)) {
@@ -175,7 +143,6 @@ export default {
     }
   },
   created: function () {
-    this.weeks = this.getWeeks()
     this.date = moment()
     this.selectedDay = this.date.clone()
   }

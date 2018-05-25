@@ -26,12 +26,23 @@
       </div>
       <div class="control-group">
         <h4 class="centered-text">Réactiver un jour</h4>
-        <Calendar :disabled-weekdays="disabledWeekDays" disable-before-today="true" :disabled-days="reverseDisabledDays" v-on:select="selectDayToEnable($event, day)"/>
+        <Calendar :disabled-weekdays="disabledWeekDays" disable-before-today="true" v-on:select="selectDayToEnable($event, day)"/>
         <button class="button success" @click="removeDayToDisable()">Réactiver ce jour</button>
       </div>
     </div>
     <div class="control">
       <h3>Périodes</h3>
+      <div class="control-group">
+        <ul>
+          <li v-for="(period, index) in this.periods" :key="index">
+            From {{ period.start.format('dddd D MMMM YYYY') }} to {{ period.end.format('dddd D MMMM YYYY') }}
+            <button @click="removePeriod(period)">Supprimer cette période</button>
+          </li>
+        </ul>
+      </div>
+      <div class="control-group">
+        <daterange-picker />
+      </div>
       <div class="control-group">
         <h4>Premier jour</h4>
         <Calendar disabled-weekdays="" disable-before-today="true" disabled-days="" v-on:select="selectFirstPeriodDay($event, day)"/>
@@ -51,6 +62,7 @@
 
 <script>
 import Calendar from './components/Calendar'
+import DaterangePicker from './components/DaterangePicker'
 import moment from 'moment'
 
 const dateFormat = 'dddd D MMMM YYYY'
@@ -80,25 +92,14 @@ export default {
     }
   },
   components: {
-    Calendar
+    Calendar,
+    DaterangePicker
   },
   computed: {
     dayLabel () {
       if (this.day instanceof moment) {
         return this.day.format(dateFormat)
       }
-    },
-    reverseDisabledDays () {
-      let result = []
-      if (this.day instanceof moment) {
-        for (var i = 1; i <= this.day.daysInMonth(); i++) {
-          if (!this.disabledDays.includes(moment().date(i).format(dateFormat))) {
-            result.push(moment().date(i).format(dateFormat))
-          }
-        }
-      }
-      // console.log(result)
-      return result
     }
   },
   methods: {
@@ -137,6 +138,14 @@ export default {
           })
         }
       }
+    },
+    removePeriod (period) {
+      let self = this
+      this.periods.forEach(function (elt) {
+        if (period === elt) {
+          self.periods.splice(self.periods.indexOf(period), 1)
+        }
+      })
     }
   }
 }
