@@ -9,67 +9,46 @@
         <div class="datepicker__header__formated_month_day">{{ formated_date }}</div>
         <div class="datepicker__header__formated_year">{{ formated_selected_year }}</div>
       </div>
-      <div class="datepicker__header__navigation">
-        <span class="datepicker__header__navigation__previous datepicker__control" @click="previousMonth()"><i class="fas fa-angle-left"></i></span>
-        <span class="datepicker__header__navigation__label">{{ formated_month }} {{formated_year }}</span>
-        <span class="datepicker__header__navigation__next datepicker__control" @click="nextMonth()"><i class="fas fa-angle-right"></i></span>
-      </div>
     </div>
-    <table class="datepicker__table">
-      <thead class="datepicker__days__label">
-        <tr class="tr">
-          <th class="datepicker__day__label">Lun</th>
-          <th class="datepicker__day__label">Mar</th>
-          <th class="datepicker__day__label">Mer</th>
-          <th class="datepicker__day__label">Jeu</th>
-          <th class="datepicker__day__label">Ven</th>
-          <th class="datepicker__day__label">Sam</th>
-          <th class="datepicker__day__label">Dim</th>
-        </tr>
-      </thead>
-      <tbody class="datepicker__table__content">
-        <tr v-for="(week, index) in weeks" :key="index" class="datepicker__table__line">
-          <td v-for="(day, index) in week" :key="index" @click.stop="select($event,day)" :class="{
-            datepicker__table__cell__selected: isSelected(day),
-            datepicker__table__day: isMomentInstance(day),
-            datepicker__table__disabled__day: isDisabledDay(day) }"><span v-if="isMomentInstance(day)">{{ day.date() }} </span></td>
-        </tr>
-      </tbody>
-    </table>
+    <Agenda :disabled-weekdays="disabledWeekdays" disable-before-today="true" :disabled-days="disabledDays" :disabled-periods="disabledPeriods" v-on:select="select($event)"/>
   </div>
 </template>
 
 <script>
 
 import moment from 'moment'
-import MonthGenerator from '../modules/MonthGenerator'
-
-const dateFormat = 'dddd D MMMM YYYY'
+import Agenda from './Agenda'
+/* import MonthGenerator from '../modules/MonthGenerator'
+import Period from '../modules/Period' */
+import PeriodsCollection from '../modules/PeriodsCollectionFactory'
+// import Weekday from '../modules/Weekday'
 
 export default {
   name: 'Calendar',
-  props: ['disabledWeekdays', 'disabledDays', 'disableBeforeToday', 'disabledPeriods'],
+  props: {
+    disabledWeekdays: [Array],
+    disabledDays: [Array, String],
+    disabledBeforeToday: {
+      type: Boolean,
+      default: true
+    },
+    disabledPeriods: {
+      type: Object,
+      default: () => { PeriodsCollection([]) }
+    }
+  },
   data () {
     return {
       date: moment(),
-      selectedDay: moment()
+      selectedDay: ''
     }
   },
+  components: {
+    Agenda
+  },
   computed: {
-    month () {
-      return this.date.format('MMMM')
-    },
-    year () {
-      return this.date.year()
-    },
     locale_day () {
       return this.selectedDay.format('dddd')
-    },
-    formated_month () {
-      return this.date.format('MMM')
-    },
-    formated_year () {
-      return this.date.format('YYYY')
     },
     formated_date () {
       return this.selectedDay.format('D')
@@ -79,67 +58,12 @@ export default {
     },
     formated_selected_year () {
       return this.selectedDay.format('YYYY')
-    },
-    weeks () {
-      return MonthGenerator.weeks(this.date)
     }
   },
   methods: {
-    nextMonth () {
-      this.date = moment(this.date.add(1, 'month'))
-      this.weeks = MonthGenerator.weeks(this.date)
-    },
-    previousMonth () {
-      this.date = moment(this.date.subtract(1, 'month'))
-      this.weeks = MonthGenerator.weeks(this.date)
-    },
-    select (event, day) {
-      if (day instanceof moment && !this.isDisabledDay(day)) {
-        this.selectedDay = moment().set('year', this.date.year()).set('month', this.date.month()).set('date', event.target.innerText)
-        this.$emit('select', day)
-      }
-    },
-    isSelected (day) {
-      if (day instanceof moment && !this.isDisabledDay(day)) {
-        return this.selectedDay.date() === day.date() && this.selectedDay.month() === day.month() && this.selectedDay.year() === day.year()
-      }
-      return false
-    },
-    /* Trick to bypass the impossibility of using the instanceof keyword with vuejs */
-    isMomentInstance (day) {
-      return day instanceof moment
-    },
-    isDisabledWeekday (weekday) {
-      if (weekday instanceof moment) {
-        let disabledWeekday = false
-        if (Array.isArray(this.disabledWeekdays)) {
-          this.disabledWeekdays.forEach(function (day) {
-            if (day.index === weekday.weekday() && day.checked === true) {
-              disabledWeekday = true
-            }
-          })
-        }
-        return disabledWeekday
-      }
-      return false
-    },
-    isInPeriod (day) {
-      if (Array.isArray(this.disabledPeriods)) {
-        let result = false
-        this.disabledPeriods.forEach(function (period) {
-          if (day.isBetween(period.start, period.end, 'day', '[]')) {
-            result = true
-          }
-          console.log(period.start.format(dateFormat), period.end.format(dateFormat), day.format(dateFormat), (day.isBetween(period.start, period.end, 'day', '[]')))
-        })
-        return result
-      }
-    },
-    isDisabledDay (day) {
-      if (day instanceof moment) {
-        return this.isInPeriod(day) || this.isDisabledWeekday(day) || (Array.isArray(this.disabledDays) && this.disabledDays.includes(day.format(dateFormat))) || (this.disableBeforeToday && day.isBefore(moment()))
-      }
-      return false
+    select (args) {
+      this.selectedDay = args.selected
+      this.$emit('select', this.selectedDay)
     }
   },
   created: function () {
@@ -150,8 +74,9 @@ export default {
 </script>
 
 <style lang="scss">
-$dark-color: #c66900;
 $main-color: #ff9800;
+$dark-color: darken($main-color, 15);
+$light-color: lighten($main-color, 15);
 $width: 280px;
 
 .datepicker__container * {

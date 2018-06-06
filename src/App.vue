@@ -3,10 +3,10 @@
     <div class="control">
       <h3 class="centered-text">Jours de semaines</h3>
       <p>Désactiver :<br/>
-      <span v-for="(day,index) in this.disabledWeekDays" :key='index'>
+      <span v-for="(day,index) in disabledWeekdays" :key='index'>
         <input
         type='checkbox'
-        v-model='day.checked'>
+        v-model='day.disabled'>
         Désactiver {{ day.name }}<br/>
       </span>
       </p>
@@ -21,41 +21,37 @@
             {{ day }}
           </li>
         </ul>
-        <Calendar :disabled-weekdays="disabledWeekDays" :disabled-days="disabledDays" disable-before-today="true" v-on:select="selectDayToDisable($event, day)"/>
+        <Calendar :disabled-weekdays="disabledWeekdays" :disabled-days="disabledDays" disable-before-today="true" @select="selectDayToDisable($event, day)"/>
         <button class="button alert" @click="addDayToDisable()">Désactiver ce jour</button>
       </div>
       <div class="control-group">
         <h4 class="centered-text">Réactiver un jour</h4>
-        <Calendar :disabled-weekdays="disabledWeekDays" disable-before-today="true" v-on:select="selectDayToEnable($event, day)"/>
+        <Calendar :disabled-weekdays="disabledWeekdays" disable-before-today="true" v-on:select="selectDayToEnable($event, day)"/>
         <button class="button success" @click="removeDayToDisable()">Réactiver ce jour</button>
       </div>
     </div>
     <div class="control">
-      <h3>Périodes</h3>
-      <div class="control-group">
+      <h3 class="centered-text">Périodes</h3>
+      <div class="control-group" style="display: block;">
         <ul>
-          <li v-for="(period, index) in this.periods" :key="index">
+          <li v-for="(period, index) in this.periods.periods" :key="index">
             From {{ period.start.format('dddd D MMMM YYYY') }} to {{ period.end.format('dddd D MMMM YYYY') }}
-            <button @click="removePeriod(period)">Supprimer cette période</button>
+            <button @click="removePeriod(period)" class="button alert" style="display: inline">Supprimer cette période</button>
           </li>
         </ul>
       </div>
       <div class="control-group">
-        <daterange-picker />
-      </div>
-      <div class="control-group">
-        <h4>Premier jour</h4>
-        <Calendar disabled-weekdays="" disable-before-today="true" disabled-days="" v-on:select="selectFirstPeriodDay($event, day)"/>
-      </div>
-      <div class="control-group">
-        <h4>Dernier jour</h4>
-        <Calendar disabled-weekdays="" disable-before-today="true" disabled-days="" v-on:select="selectLastPeriodDay($event, day)"/>
+        <daterange-picker @selectFirstDay='selectFirstPeriodDay($event)' @selectLastDay='selectLastPeriodDay($event)' />
       </div>
       <button class="button success" @click="addPeriod()">Désactiver cette période</button>
     </div>
     <div class="result">
       <h3 class="centered-text">Résultat final</h3>
-      <Calendar :disabled-weekdays="disabledWeekDays" disable-before-today="true" :disabled-days="disabledDays" :disabled-periods="periods" v-on:select="updateDay($event, day)"/>
+      <Calendar :disabled-weekdays="disabledWeekdays" disable-before-today="true" :disabled-days="disabledDays" :disabled-periods="periods" v-on:select="updateDay($event, day)"/>
+    </div>
+
+    <div>
+      <Agenda :disabled-weekdays="disabledWeekdays" disable-before-today="true" :disabled-days="disabledDays" :disabled-periods="periods" v-on:select="updateDay($event, day)"/>
     </div>
   </div>
 </template>
@@ -63,7 +59,11 @@
 <script>
 import Calendar from './components/Calendar'
 import DaterangePicker from './components/DaterangePicker'
+import Agenda from './components/Agenda'
 import moment from 'moment'
+import Weekday from './modules/Weekday'
+import Period from './modules/PeriodFactory'
+import PeriodsCollection from './modules/PeriodsCollectionFactory'
 
 const dateFormat = 'dddd D MMMM YYYY'
 
@@ -71,29 +71,28 @@ export default {
   name: 'App',
   data () {
     return {
-      disabledWeekDays: [
-        { name: 'lundi', index: 0, checked: false },
-        { name: 'mardi', index: 1, checked: false },
-        { name: 'mercredi', index: 2, checked: false },
-        { name: 'jeudi', index: 3, checked: false },
-        { name: 'vendredi', index: 4, checked: false },
-        { name: 'samedi', index: 5, checked: false },
-        { name: 'dimanche', index: 6, checked: false }
+      disabledWeekdays: [
+        new Weekday('lundi', 0, false),
+        new Weekday('mardi', 1, false),
+        new Weekday('mercredi', 2, false),
+        new Weekday('jeudi', 3, false),
+        new Weekday('vendredi', 4, false),
+        new Weekday('samedi', 5, false),
+        new Weekday('dimanche', 6, false)
       ],
-      disabledDays: [
-        moment().add(1, 'day').format(dateFormat)
-      ],
+      disabledDays: [],
       day: moment(),
       dayToDisable: moment(),
       dayToEnable: moment(),
-      periods: [],
-      firstPeriodDay: '',
-      lastPeriodDay: ''
+      periods: PeriodsCollection([]),
+      firstPeriodDay: moment(),
+      lastPeriodDay: moment().add(1, 'day')
     }
   },
   components: {
     Calendar,
-    DaterangePicker
+    DaterangePicker,
+    Agenda
   },
   computed: {
     dayLabel () {
@@ -113,11 +112,11 @@ export default {
     selectDayToEnable (day) {
       this.dayToEnable = day
     },
-    selectFirstPeriodDay (day) {
-      this.firstPeriodDay = day
+    selectFirstPeriodDay (event) {
+      this.firstPeriodDay = event.day
     },
-    selectLastPeriodDay (day) {
-      this.lastPeriodDay = day
+    selectLastPeriodDay (event) {
+      this.lastPeriodDay = event.day
     },
     addDayToDisable () {
       if (!this.disabledDays.includes(this.dayToDisable.format(dateFormat))) {
@@ -130,22 +129,12 @@ export default {
       }
     },
     addPeriod () {
-      if (this.lastPeriodDay instanceof moment && this.firstPeriodDay instanceof moment) {
-        if (this.lastPeriodDay.isAfter(this.firstPeriodDay)) {
-          this.periods.push({
-            start: this.firstPeriodDay.clone(),
-            end: this.lastPeriodDay.clone()
-          })
-        }
+      if (this.lastPeriodDay instanceof moment && this.firstPeriodDay instanceof moment && this.lastPeriodDay.isAfter(this.firstPeriodDay, 'day')) {
+        this.periods.add(Period(this.firstPeriodDay.clone(), this.lastPeriodDay.clone()))
       }
     },
     removePeriod (period) {
-      let self = this
-      this.periods.forEach(function (elt) {
-        if (period === elt) {
-          self.periods.splice(self.periods.indexOf(period), 1)
-        }
-      })
+      this.periods.remove(period)
     }
   }
 }
@@ -174,9 +163,7 @@ export default {
   margin: 0;
 }
 .control-group {
-  border: 1px solid gray;
   display: inline-block;
-  width: 300px;
   margin-right: 15px;
   vertical-align: top;
 
